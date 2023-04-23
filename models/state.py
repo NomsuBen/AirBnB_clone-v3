@@ -1,25 +1,37 @@
 #!/usr/bin/python3
-"""This module defines a class User"""
+"""This is the state class"""
 from models.base_model import BaseModel, Base
-from models import storage_type
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
+from models.city import City
+from os import getenv
+import models
 
 
-class User(BaseModel, Base):
-    """This class defines a user by various attributes"""
-    __tablename__ = 'users'
+storage_type = getenv("HBNB_TYPE_STORAGE")
+
+
+class State(BaseModel, Base):
+    '''
+        Implementation for the State.
+    '''
+    __tablename__ = 'states'
     if storage_type == 'db':
-        email = Column(String(128), nullable=False)
-        password = Column(String(128), nullable=False)
-        first_name = Column(String(128), nullable=True)
-        last_name = Column(String(128), nullable=True)
-        places = relationship('Place', backref='user',
-                              cascade='all, delete, delete-orphan')
-        reviews = relationship('Review', backref='user',
-                               cascade='all, delete, delete-orphan')
+        name = Column(String(128), nullable=False)
+        cities = relationship("City", backref="state",
+                              cascade="delete")
     else:
-        email = ""
-        password = ""
-        first_name = ""
-        last_name = ""
+        name = ""
+
+        @property
+        def cities(self):
+            """
+            get list of City instances with state_id
+            equals to the current State.id
+            """
+            list_cities = []
+            all_cities = models.storage.all(City)
+            for key, city_obj in all_cities.items():
+                if city_obj.state_id == self.id:
+                    list_cities.append(city_obj)
+            return list_cities
